@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<title>Unidad 1</title>
+
+</head>
+
+<body>
+
+</body>
+
+<script type="text/javascript">
+
+class APIModelAccess
+{
+	constructor()
+	{
+		this._authData = new Map();
+		this._maxLoginFailedAttempts = 3;
+		
+		let userData =
+		[
+			{
+				password: '987654',
+				failedLoginCounter: 0,
+				isLocked: false
+			},
+			{
+				password: '987654',
+				failedLoginCounter: 0,
+				isLocked: false
+			}
+		]
+
+		this._authData.set('scorpion', userData[0] );
+		this._authData.set('subZero', userData[1] );
+	}
+
+	isValidUserGetData( username )
+	{
+		return this._authData.get(username);
+	}
+
+	authenticateUser( username, password )
+	{
+		let api_return = 
+		{
+			status: false,
+			result: null
+		};
+
+
+		if ( (username != undefined && username != null && username != '') && (password != undefined && password != null && password != '') )
+		{
+			let userdata = this.isValidUserGetData(username);
+
+			if ( userdata.isLocked == false )
+			{
+				if( userdata.password === password )
+				{
+					api_return.status = true;
+				}
+				else
+				{
+					api_return.status = false;
+					api_return.result = 'USER_PASSWORD_FAILED';
+
+					userdata.failedLoginCounter++;
+					
+					if ( userdata.failedLoginCounter == this._maxLoginFailedAttempts )
+					{
+						userdata.isLocked = true;
+						api_return.status = false;
+						api_return.result = 'BLOCKED_USER';
+					}
+				}
+			}
+			else
+			{
+				api_return.status = false;
+				api_return.result = 'BLOCKED_USER';
+			}
+			
+		}
+		
+		return api_return;
+	}
+
+	getMaxLoginAttempts()
+	{
+		return this._maxLoginFailedAttempts;
+	}
+
+}
+
+
+class LoginApplicationView
+{
+	constructor(apiInstanceObject)
+	{
+		this._api = apiInstanceObject;
+	}
+
+	show()
+	{
+		let username = window.prompt("Ingrese su nombre de usuario:");
+		let password = window.prompt("Ingrese contraseña:");
+
+		let api_return = this._api.authenticateUser( username, password );
+		
+		if ( api_return.status )
+		{
+			alert('Usuario autenticado exitosamente');
+		}
+		else if ( api_return.status == false )
+		{
+			switch ( api_return.result ) 
+			{
+				case 'BLOCKED_USER':
+					alert('Usuario bloqueado. Contacte al administrador');
+				break;
+
+				case 'USER_PASSWORD_FAILED':
+					alert('Usuario y/o contraseña incorrecta');
+				break;
+
+				default:
+					alert('Error desconocido');
+				break;
+			}
+		}
+
+		return api_return;	
+	}
+}
+
+class Application
+{
+	constructor( apiInstanceObject )
+	{
+		this._api = apiInstanceObject;
+		this._defaultView = new LoginApplicationView(this._api);		
+		this._maxLoginFailedAttempts = this._api.getMaxLoginAttempts();
+		this._attempts = 0;
+		this._api_return = null;
+	}
+
+	init()
+	{
+		this._api_return = this._defaultView.show();
+	}
+
+	run()
+	{
+		while( this._api_return.result == 'USER_PASSWORD_FAILED' && this._attempts < this._maxLoginFailedAttempts )
+		{
+			this._api_return = this._defaultView.show();
+
+			if ( this._api_return.result == 'USER_PASSWORD_FAILED' )
+			{
+				this._attempts++;
+			}
+		}
+	}
+}
+
+
+
+function main()
+{
+	let model = new APIModelAccess();
+	let app = new Application(model);
+
+	app.init();
+	app.run();
+
+}
+
+window.onload = main;
+
+
+</script>
+
+</html>

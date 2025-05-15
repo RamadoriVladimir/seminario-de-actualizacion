@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<title>Unidad 1</title>
+</head>
+
+<body>
+</body>
+
+<script type="text/javascript">
+
+class InventoryModelAccess {
+    constructor() {
+        this._inventoryData = new Map();
+        
+        let productData = [
+            {
+                nombre: 'Lavandina x 1L',
+                precio: 875.25,
+                stock: 3000
+            },
+            {
+                nombre: 'Detergente x 500mL',
+                precio: 1102.45,
+                stock: 2010
+            },
+            {
+                nombre: 'Jabon en polvo x 250g',
+                precio: 650.22,
+                stock: 407
+            }
+        ];
+
+        this._inventoryData.set(1, productData[0]);
+        this._inventoryData.set(4, productData[1]);
+        this._inventoryData.set(22, productData[2]);
+    }
+
+    getAllProducts() {
+        return Array.from(this._inventoryData.entries()).map(([id, product]) => ({
+            id,
+            ...product
+        }));
+    }
+
+    addProduct(id, nombre, precio, stock) {
+        if (this._inventoryData.has(id)) {
+            return {success: false, message: "El ID del producto ya existe"};
+        }
+        this._inventoryData.set(id, {nombre, precio, stock});
+        return {success: true, message: "Producto agregado exitosamente"};
+    }
+
+    updateProduct(id, newData) {
+        if (!this._inventoryData.has(id)) {
+            return {success: false, message: "Producto no encontrado"};
+        }
+        const product = this._inventoryData.get(id);
+        Object.assign(product, newData);
+        return {success: true, message: "Producto actualizado exitosamente"};
+    }
+
+    deleteProduct(id) {
+        if (!this._inventoryData.has(id)) {
+            return {success: false, message: "Producto no encontrado"};
+        }
+        this._inventoryData.delete(id);
+        return {success: true, message: "Producto eliminado exitosamente"};
+    }
+
+    productExists(id) {
+        return this._inventoryData.has(id);
+    }
+
+    getProduct(id) {
+        if (!this._inventoryData.has(id)) {
+            return null;
+        }
+        return {
+            id,
+            ...this._inventoryData.get(id)
+        };
+    }
+
+    purchaseProduct(id, quantity) {
+        if (!this._inventoryData.has(id)) {
+            return {success: false, message: "Producto no encontrado"};
+        }
+        
+        const product = this._inventoryData.get(id);
+        
+        if (product.stock <= 0) {
+            return {success: false, message: "No hay stock disponible de este producto"};
+        }
+        
+        if (quantity <= 0) {
+            return {success: false, message: "La cantidad debe ser mayor a cero"};
+        }
+        
+        if (quantity > product.stock) {
+            return {success: false, message: `No hay suficiente stock. Disponible: ${product.stock}`};
+        }
+        
+        product.stock -= quantity;
+        return {
+            success: true, 
+            message: `Compra realizada. Nuevo stock: ${product.stock}`,
+            total: quantity * product.precio
+        };
+    }
+}
+
+class PasswordManager {
+    constructor() {
+        this.minLength = 8;
+        this.maxLength = 16;
+        this.minUppercase = 1;
+        this.minSpecialChars = 2;
+        this.specialChars = '!@#$%^&*()_+-=[]{};\':"\\|,.<>/?';
+    }
+
+    isSecurePassword(password) {
+        if (password.length < this.minLength || password.length > this.maxLength) {
+            return {valid: false, message: `La contraseña debe tener entre ${this.minLength} y ${this.maxLength} caracteres`};
+        }
+
+        let upperCaseCount = 0;
+        for (let char of password) {
+            if (char >= 'A' && char <= 'Z') {
+                upperCaseCount++;
+            }
+        }
+        if (upperCaseCount < this.minUppercase) {
+            return {valid: false, message: `Debe contener al menos ${this.minUppercase} mayuscula(s)`};
+        }
+
+        let specialCharsCount = 0;
+        for (let char of password) {
+            if (this.specialChars.includes(char)) {
+                specialCharsCount++;
+            }
+        }
+        if (specialCharsCount < this.minSpecialChars) {
+            return {valid: false, message: `Debe contener al menos ${this.minSpecialChars} caracteres especiales (${this.specialChars})`};
+        }
+
+        for (let char of password) {
+            const isLowercase = char >= 'a' && char <= 'z';
+            const isUppercase = char >= 'A' && char <= 'Z';
+            const isNumber = char >= '0' && char <= '9';
+            const isSpecialChar = this.specialChars.includes(char);
+            
+            if (!(isLowercase || isUppercase || isNumber || isSpecialChar)) {
+                return {valid: false, message: "Contiene caracteres no permitidos"};
+            }
+        }
+
+        return {valid: true, message: "Contraseña valida"};
+    }
+}
+
+class APIModelAccess {
+    constructor(passwordManager) {
+        this._authData = new Map();
+        this._maxLoginFailedAttempts = 3;
+        this._passwordManager = passwordManager;
+        this._inventory = new InventoryModelAccess();
+        this._rolePermissions = {
+            Administrador: ['all'],
+            Vendedor: ['view_products', 'purchase', 'view_stock'],
+            TrabajadorDeposito: ['view_products', 'manage_stock', 'view_stock'],
+            Cliente: ['view_products', 'purchase']
+        };
+
+        let userData = [
+            {
+                password: 'Admin@123!',
+                failedLoginCounter: 0,
+                isLocked: false,
+                role: 'Administrador',
+                permissions: this._rolePermissions['Administrador']
+            },
+            {
+                password: 'Vendedor@123!',
+                failedLoginCounter: 0,
+                isLocked: false,
+                role: 'Vendedor',
+                permissions: this._rolePermissions['Vendedor']
+            },
+            {
+                password: 'Deposito@123!',
+                failedLoginCounter: 0,
+                isLocked: false,
+                role: 'TrabajadorDeposito',
+                permissions: this._rolePermissions['TrabajadorDeposito']
+            },
+            {
+                password: 'Cliente@123!',
+                failedLoginCounter: 0,
+                isLocked: false,
+                role: 'Cliente',
+                permissions: this._rolePermissions['Cliente']
+            }
+        ];
+
+        this._authData.set('admin', userData[0]);
+        this._authData.set('vendedor1', userData[1]);
+        this._authData.set('deposito1', userData[2]);
+        this._authData.set('cliente1', userData[3]);
+    }
+
+    getInventoryManager() {
+        return this._inventory;
+    }
+
+    isValidUserGetData(username) {
+        return this._authData.get(username);
+    }
+
+    userExists(username) {
+        return this._authData.has(username);
+    }
+
+    createUser(username, password, role) {
+        if (this.userExists(username)) {
+            return {success: false, message: "El nombre de usuario ya existe"};
+        }
+
+        const validation = this._passwordManager.isSecurePassword(password);
+        if (!validation.valid) {
+            return {success: false, message: `La contraseña no cumple los requisitos: ${validation.message}`};
+        }
+
+        if (!this._rolePermissions[role]) {
+            return {success: false, message: "Rol no valido"};
+        }
+
+        this._authData.set(username, {
+            password: password,
+            failedLoginCounter: 0,
+            isLocked: false,
+            role: role,
+            permissions: this._rolePermissions[role]
+        });
+
+        return {success: true, message: "Usuario creado exitosamente"};
+    }
+
+    getUserRole(username) {
+        const user = this._authData.get(username);
+        return user ? user.role : null;
+    }
+
+    checkPermission(username, permission) {
+        const user = this._authData.get(username);
+        if (!user) return false;
+        return user.permissions.includes('all') || user.permissions.includes(permission);
+    }
+
+    authenticateUser(username, password) {
+        let api_return = {
+            status: false,
+            result: null
+        };
+
+        if ((username != undefined && username != null && username != '') && 
+            (password != undefined && password != null && password != '')) {
+            let userdata = this.isValidUserGetData(username);
+
+            if (userdata) {
+                if (userdata.isLocked == false) {
+                    if (userdata.password === password) {
+                        api_return.status = true;
+                        api_return.username = username;
+                    } else {
+                        api_return.status = false;
+                        api_return.result = 'USER_PASSWORD_FAILED';
+
+                        userdata.failedLoginCounter++;
+                        
+                        if (userdata.failedLoginCounter == this._maxLoginFailedAttempts) {
+                            userdata.isLocked = true;
+                            api_return.result = 'BLOCKED_USER';
+                        }
+                    }
+                } else {
+                    api_return.status = false;
+                    api_return.result = 'BLOCKED_USER';
+                }
+            } else {
+                api_return.status = false;
+                api_return.result = 'USER_PASSWORD_FAILED';
+            }
+        }
+        
+        return api_return;
+    }
+
+    getMaxLoginAttempts() {
+        return this._maxLoginFailedAttempts;
+    }
+
+    changePassword(username, currentPassword, newPassword) {
+        let userdata = this.isValidUserGetData(username);
+        
+        if (userdata && userdata.password === currentPassword) {
+            const validation = this._passwordManager.isSecurePassword(newPassword);
+            if (validation.valid) {
+                userdata.password = newPassword;
+                return {success: true, message: "Contraseña cambiada exitosamente."};
+            } else {
+                return {success: false, message: `La nueva contraseña no es segura: ${validation.message}`};
+            }
+        }
+        return {success: false, message: "No se pudo cambiar la contraseña. Verifique su contraseña actual."};
+    }
+}
+
+class LoginApplicationView {
+    constructor(apiInstanceObject) {
+        this._api = apiInstanceObject;
+        this._passwordManager = new PasswordManager();
+    }
+
+    showMainMenu() {
+        while (true) {
+            let option = window.prompt(
+                "Menu Principal:\n" +
+                "1. Iniciar sesion\n" +
+                "2. Crear cuenta de usuario\n" +
+                "X. Salir del sistema\n\n" +
+                "Seleccione una opcion:"
+            );
+
+            switch(option) {
+                case "1":
+                    this.showLogin();
+                    break;
+                case "2":
+                    this.showCreateAccount();
+                    break;
+                case "X":
+                case "x":
+                    return;
+                default:
+                    alert("Opcion no valida. Intente nuevamente.");
+            }
+        }
+    }
+
+    showLogin() {
+        let username = window.prompt("Ingrese su nombre de usuario:");
+        let password = window.prompt("Ingrese contraseña:");
+
+        let api_return = this._api.authenticateUser(username, password);
+        
+        if (api_return.status) {
+            alert('Usuario autenticado exitosamente');
+            this.showUserMenu(api_return.username);
+        } else if (api_return.status == false) {
+            switch (api_return.result) {
+                case 'BLOCKED_USER':
+                    alert('Usuario bloqueado. Contacte al administrador');
+                    break;
+                case 'USER_PASSWORD_FAILED':
+                    alert('Usuario y/o contraseña incorrecta');
+                    break;
+                default:
+                    alert('Error desconocido');
+                    break;
+            }
+        }
+    }
+
+    showCreateAccount() {
+        let username = window.prompt("Ingrese un nombre de usuario:");
+        if (username === null) return;
+
+        if (this._api.userExists(username)) {
+            alert("El nombre de usuario ya existe. Por favor elija otro.");
+            return;
+        }
+
+        let role = window.prompt(
+            "Seleccione el rol del usuario:\n" +
+            "1. Administrador\n" +
+            "2. Vendedor\n" +
+            "3. Trabajador de deposito\n" +
+            "4. Cliente\n\n" +
+            "Ingrese el numero correspondiente:"
+        );
+
+        let roleName;
+        switch(role) {
+            case '1':
+                roleName = 'Administrador';
+                break;
+            case '2':
+                roleName = 'Vendedor';
+                break;
+            case '3':
+                roleName = 'TrabajadorDeposito';
+                break;
+            case '4':
+                roleName = 'Cliente';
+                break;
+            default:
+                alert("Opcion de rol no valida");
+                return;
+        }
+
+        let password = window.prompt(
+            "Ingrese una contraseña:\n" +
+            "Requisitos:\n" +
+            `- Entre ${this._passwordManager.minLength} y ${this._passwordManager.maxLength} caracteres\n` +
+            `- Al menos ${this._passwordManager.minUppercase} mayuscula(s)\n` +
+            `- Al menos ${this._passwordManager.minSpecialChars} simbolos especiales\n` +
+            `- Caracteres especiales permitidos: ${this._passwordManager.specialChars}\n\n` +
+            "Ingrese su contraseña:"
+        );
+
+        if (password === null) return;
+
+        let confirmPassword = window.prompt("Confirme su contraseña:");
+        if (password !== confirmPassword) {
+            alert("Las contraseñas no coinciden.");
+            return;
+        }
+
+        let result = this._api.createUser(username, password, roleName);
+        alert(result.message);
+    }
+
+    showUserMenu(username) {
+        const role = this._api.getUserRole(username);
+        let exitMenu = false;
+        
+        while (!exitMenu) {
+            let menuOptions = `Bienvenido ${username} (${role})\n` +
+                             "Menu de acciones:\n";
+
+            if (this._api.hasPermission(username, 'manage_products')) {
+                menuOptions += "1. Gestion de articulos\n";
+            }
+            if (this._api.hasPermission(username, 'purchase')) {
+                menuOptions += "2. Comprar articulos\n";
+            }
+            menuOptions += "3. Cambiar contraseña\n" +
+                          "X. Cerrar sesion\n" +
+                          "Seleccione una opcion:";
+
+            let option = window.prompt(menuOptions);
+            
+            switch(option) {
+                case "1":
+                    if (this._api.hasPermission(username, 'manage_products')) {
+                        this.showInventoryMenu(username);
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "2":
+                    if (this._api.hasPermission(username, 'purchase')) {
+                        this.purchaseProductMenu();
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "3":
+                    this.changePasswordMenu(username);
+                    break;
+                case "X":
+                case "x":
+                    exitMenu = true;
+                    alert("Sesion finalizada. Volviendo al menu principal.");
+                    break;
+                default:
+                    alert("Opcion no valida. Intente nuevamente.");
+            }
+        }
+    }
+
+    changePasswordMenu(username) {
+        let currentPassword = window.prompt("Ingrese su contraseña actual:");
+        if (currentPassword === null) return;
+
+        let newPassword = window.prompt(
+            "Ingrese su nueva contraseña:\n" +
+            "Requisitos:\n" +
+            `- Entre ${this._passwordManager.minLength} y ${this._passwordManager.maxLength} caracteres\n` +
+            `- Al menos ${this._passwordManager.minUppercase} mayuscula(s)\n` +
+            `- Al menos ${this._passwordManager.minSpecialChars} simbolos especiales\n` +
+            "- Caracteres alfanuméricos\n\n"
+        );
+
+        if (newPassword === null) {
+            return;
+        } else {
+            let confirmPassword = window.prompt("Confirme su nueva contraseña:");
+            if (newPassword !== confirmPassword) {
+                alert("Las contraseñas nuevas no coinciden.");
+                return;
+            }
+        }
+
+        let result = this._api.changePassword(username, currentPassword, newPassword);
+        alert(result.message);
+    }
+
+    showInventoryMenu(username) {
+        let exitMenu = false;
+        
+        while (!exitMenu) {
+            let menuOptions = "Gestion de Articulos:\n";
+            
+            if (this._api.hasPermission(username, 'view_products')) {
+                menuOptions += "1. Listar articulos\n";
+            }
+            if (this._api.hasPermission(username, 'manage_products')) {
+                menuOptions += "2. Nuevo articulo\n" +
+                              "3. Editar articulo\n" +
+                              "4. Eliminar articulo\n";
+            }
+            if (this._api.hasPermission(username, 'manage_stock')) {
+                menuOptions += "5. Ajustar stock\n";
+            }
+            menuOptions += "X. Volver al menu anterior\n" +
+                          "Seleccione una opcion:";
+
+            let option = window.prompt(menuOptions);
+            
+            switch(option) {
+                case "1":
+                    if (this._api.hasPermission(username, 'view_products')) {
+                        this.listProducts();
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "2":
+                    if (this._api.hasPermission(username, 'manage_products')) {
+                        this.addProductMenu();
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "3":
+                    if (this._api.hasPermission(username, 'manage_products')) {
+                        this.editProductMenu();
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "4":
+                    if (this._api.hasPermission(username, 'manage_products')) {
+                        this.deleteProductMenu();
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "5":
+                    if (this._api.hasPermission(username, 'manage_stock')) {
+                        this.adjustStockMenu();
+                    } else {
+                        alert("No tiene permisos para esta accion");
+                    }
+                    break;
+                case "X":
+                case "x":
+                    exitMenu = true;
+                    break;
+                default:
+                    alert("Opcion no valida. Intente nuevamente.");
+            }
+        }
+    }
+
+    listProducts() {
+        const inventory = this._api.getInventoryManager();
+        const products = inventory.getAllProducts();
+        
+        let productList = "Listado de Articulos:\n\n";
+        products.forEach(product => {
+            productList += `ID: ${product.id}\n`;
+            productList += `Nombre: ${product.nombre}\n`;
+            productList += `Precio: $${product.precio.toFixed(2)}\n`;
+            productList += `Stock: ${product.stock}\n\n`;
+        });
+        
+        alert(productList);
+    }
+
+    addProductMenu() {
+        const inventory = this._api.getInventoryManager();
+        
+        let id = parseInt(window.prompt("Ingrese el ID del nuevo producto:"));
+        if (isNaN(id)) {
+            alert("ID invalido. Debe ser un numero.");
+            return;
+        }
+        
+        if (inventory.productExists(id)) {
+            alert("Ya existe un producto con ese ID.");
+            return;
+        }
+        
+        let nombre = window.prompt("Ingrese el nombre del producto:");
+        if (!nombre) return;
+        
+        let precio = parseFloat(window.prompt("Ingrese el precio del producto:"));
+        if (isNaN(precio)) {
+            alert("Precio invalido. Debe ser un numero.");
+            return;
+        }
+        
+        let stock = parseInt(window.prompt("Ingrese el stock inicial del producto:"));
+        if (isNaN(stock)) {
+            alert("Stock invalido. Debe ser un numero entero.");
+            return;
+        }
+        
+        const result = inventory.addProduct(id, nombre, precio, stock);
+        alert(result.message);
+    }
+
+    editProductMenu() {
+        const inventory = this._api.getInventoryManager();
+        
+        let id = parseInt(window.prompt("Ingrese el ID del producto a editar:"));
+        if (isNaN(id)) {
+            alert("ID invalido. Debe ser un numero.");
+            return;
+        }
+        
+        const product = inventory.getProduct(id);
+        if (!product) {
+            alert("No existe un producto con ese ID.");
+            return;
+        }
+        
+        let newData = {};
+        
+        let nombre = window.prompt(`Nombre actual: ${product.nombre}\nIngrese nuevo nombre (deje vacio para no cambiar):`, product.nombre);
+        if (nombre && nombre !== product.nombre) {
+            newData.nombre = nombre;
+        }
+        
+        let precio = window.prompt(`Precio actual: ${product.precio}\nIngrese nuevo precio (deje vacio para no cambiar):`, product.precio);
+        if (precio) {
+            precio = parseFloat(precio);
+            if (isNaN(precio)) {
+                alert("Precio invalido. Debe ser un numero.");
+                return;
+            }
+            if (precio !== product.precio) {
+                newData.precio = precio;
+            }
+        }
+        
+        let stock = window.prompt(`Stock actual: ${product.stock}\nIngrese nuevo stock (deje vacio para no cambiar):`, product.stock);
+        if (stock) {
+            stock = parseInt(stock);
+            if (isNaN(stock)) {
+                alert("Stock invalido. Debe ser un numero entero.");
+                return;
+            }
+            if (stock !== product.stock) {
+                newData.stock = stock;
+            }
+        }
+        
+        if (Object.keys(newData).length === 0) {
+            alert("No se realizaron cambios.");
+            return;
+        }
+        
+        const result = inventory.updateProduct(id, newData);
+        alert(result.message);
+    }
+
+    deleteProductMenu() {
+        const inventory = this._api.getInventoryManager();
+        
+        let id = parseInt(window.prompt("Ingrese el ID del producto a eliminar:"));
+        if (isNaN(id)) {
+            alert("ID invalido. Debe ser un numero.");
+            return;
+        }
+        
+        if (!inventory.productExists(id)) {
+            alert("No existe un producto con ese ID.");
+            return;
+        }
+        
+        const confirmDelete = confirm("¿Esta seguro que desea eliminar este producto?");
+        if (confirmDelete) {
+            const result = inventory.deleteProduct(id);
+            alert(result.message);
+        } else {
+            alert("Operacion cancelada.");
+        }
+    }
+
+    adjustStockMenu() {
+        const inventory = this._api.getInventoryManager();
+        this.listProducts();
+        
+        let id = parseInt(window.prompt("Ingrese el ID del producto a ajustar:"));
+        if (isNaN(id)) {
+            alert("ID invalido. Debe ser un numero.");
+            return;
+        }
+        
+        const product = inventory.getProduct(id);
+        if (!product) {
+            alert("No existe un producto con ese ID.");
+            return;
+        }
+        
+        let adjustment = parseInt(window.prompt(
+            `Producto: ${product.nombre}\n` +
+            `Stock actual: ${product.stock}\n\n` +
+            "Ingrese la cantidad a sumar (positivo) o restar (negativo):"
+        ));
+        
+        if (isNaN(adjustment)) {
+            alert("Cantidad invalida. Debe ser un numero.");
+            return;
+        }
+        
+        const confirmAdjust = confirm(
+            `¿Confirmar ajuste de ${adjustment} unidades a ${product.nombre}?\n` +
+            `Nuevo stock: ${product.stock + adjustment}`
+        );
+        
+        if (confirmAdjust) {
+            const result = inventory.updateProduct(id, {stock: product.stock + adjustment});
+            alert(result.message);
+        } else {
+            alert("Ajuste cancelado.");
+        }
+    }
+
+    purchaseProductMenu() {
+        const inventory = this._api.getInventoryManager();
+        this.listProducts();
+        
+        let id = parseInt(window.prompt("Ingrese el ID del producto a comprar:"));
+        if (isNaN(id)) {
+            alert("ID invalido. Debe ser un numero.");
+            return;
+        }
+        
+        const product = inventory.getProduct(id);
+        if (!product) {
+            alert("No existe un producto con ese ID.");
+            return;
+        }
+        
+        if (product.stock <= 0) {
+            alert("No hay stock disponible de este producto.");
+            return;
+        }
+        
+        let quantity = parseInt(window.prompt(
+            `Producto: ${product.nombre}\n` +
+            `Precio unitario: $${product.precio.toFixed(2)}\n` +
+            `Stock disponible: ${product.stock}\n\n` +
+            "Ingrese la cantidad a comprar:"
+        ));
+        
+        if (isNaN(quantity)) {
+            alert("Cantidad invalida. Debe ser un numero.");
+            return;
+        }
+        
+        if (quantity <= 0) {
+            alert("La cantidad debe ser mayor a cero.");
+            return;
+        }
+        
+        const confirmPurchase = confirm(
+            `¿Confirmar compra de ${quantity} unidades de ${product.nombre}?\n` +
+            `Total: $${(quantity * product.precio).toFixed(2)}`
+        );
+        
+        if (confirmPurchase) {
+            const result = inventory.purchaseProduct(id, quantity);
+            alert(result.message + (result.success ? `\nTotal pagado: $${result.total.toFixed(2)}` : ""));
+        } else {
+            alert("Compra cancelada.");
+        }
+    }
+}
+
+class Application {
+    constructor(apiInstanceObject) {
+        this._api = apiInstanceObject;
+        this._defaultView = new LoginApplicationView(this._api);
+    }
+
+    run() {
+        this._defaultView.showMainMenu();
+    }
+}
+
+function main() {
+    const passwordManager = new PasswordManager();
+    let model = new APIModelAccess(passwordManager);
+    let app = new Application(model);
+
+    app.run();
+}
+
+window.onload = main;
+</script>
+</html>

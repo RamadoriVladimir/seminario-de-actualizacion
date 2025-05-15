@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<title>Unidad 1</title>
+</head>
+
+<body>
+</body>
+
+<script type="text/javascript">
+
+class PasswordManager {
+    constructor() {
+        this.minLength = 8;
+        this.maxLength = 16;
+        this.minUppercase = 1;
+        this.minSpecialChars = 2;
+        this.specialChars = '!@#$%^&*()_+-=[]{};\':"\\|,.<>/?';
+    }
+
+    isSecurePassword(password) {
+        if (password.length < this.minLength || password.length > this.maxLength) {
+            return {valid: false, message: `La contraseña debe tener entre ${this.minLength} y ${this.maxLength} caracteres`};
+        }
+
+        let upperCaseCount = 0;
+        for (let char of password) {
+            if (char >= 'A' && char <= 'Z') {
+                upperCaseCount++;
+            }
+        }
+        if (upperCaseCount < this.minUppercase) {
+            return {valid: false, message: `Debe contener al menos ${this.minUppercase} mayúscula(s)`};
+        }
+
+        let specialCharsCount = 0;
+        for (let char of password) {
+            if (this.specialChars.includes(char)) {
+                specialCharsCount++;
+            }
+        }
+        if (specialCharsCount < this.minSpecialChars) {
+            return {valid: false, message: `Debe contener al menos ${this.minSpecialChars} caracteres especiales (${this.specialChars})`};
+        }
+
+        for (let char of password) {
+            const isLowercase = char >= 'a' && char <= 'z';
+            const isUppercase = char >= 'A' && char <= 'Z';
+            const isNumber = char >= '0' && char <= '9';
+            const isSpecialChar = this.specialChars.includes(char);
+            
+            if (!(isLowercase || isUppercase || isNumber || isSpecialChar)) {
+                return {valid: false, message: "Contiene caracteres no permitidos"};
+            }
+        }
+
+        return {valid: true, message: "Contraseña valida"};
+    }
+}
+
+class APIModelAccess {
+    constructor(passwordManager) {
+        this._authData = new Map();
+        this._maxLoginFailedAttempts = 3;
+        this._passwordManager = passwordManager;
+
+        let userData = [
+            {
+                password: 'Contraseni@123!',
+                failedLoginCounter: 0,
+                isLocked: false
+            },
+            {
+                password: 'Contr@Segura!_456',
+                failedLoginCounter: 0,
+                isLocked: false
+            }
+        ];
+
+        this._authData.set('scorpion', userData[0]);
+        this._authData.set('subZero', userData[1]);
+    }
+
+    isValidUserGetData(username) {
+        return this._authData.get(username);
+    }
+
+    authenticateUser(username, password) {
+        let api_return = {
+            status: false,
+            result: null
+        };
+
+        if ((username != undefined && username != null && username != '') && 
+            (password != undefined && password != null && password != '')) {
+            let userdata = this.isValidUserGetData(username);
+
+            if (userdata) {
+                if (userdata.isLocked == false) {
+                    if (userdata.password === password) {
+                        api_return.status = true;
+                        api_return.username = username;
+                    } else {
+                        api_return.status = false;
+                        api_return.result = 'USER_PASSWORD_FAILED';
+
+                        userdata.failedLoginCounter++;
+                        
+                        if (userdata.failedLoginCounter == this._maxLoginFailedAttempts) {
+                            userdata.isLocked = true;
+                            api_return.result = 'BLOCKED_USER';
+                        }
+                    }
+                } else {
+                    api_return.status = false;
+                    api_return.result = 'BLOCKED_USER';
+                }
+            } else {
+                api_return.status = false;
+                api_return.result = 'USER_PASSWORD_FAILED';
+            }
+        }
+        
+        return api_return;
+    }
+
+    getMaxLoginAttempts() {
+        return this._maxLoginFailedAttempts;
+    }
+
+    changePassword(username, currentPassword, newPassword) {
+        let userdata = this.isValidUserGetData(username);
+        
+        if (userdata && userdata.password === currentPassword) {
+            const validation = this._passwordManager.isSecurePassword(newPassword);
+            if (validation.valid) {
+                userdata.password = newPassword;
+                return {success: true, message: "Contraseña cambiada exitosamente."};
+            } else {
+                return {success: false, message: `La nueva contraseña no es segura: ${validation.message}`};
+            }
+        }
+        return {success: false, message: "No se pudo cambiar la contraseña. Verifique su contraseña actual."};
+    }
+}
+
+class LoginApplicationView {
+    constructor(apiInstanceObject) {
+        this._api = apiInstanceObject;
+        this._passwordManager = new PasswordManager();
+    }
+
+    show() {
+        let username = window.prompt("Ingrese su nombre de usuario:");
+        let password = window.prompt("Ingrese contraseña:");
+
+        let api_return = this._api.authenticateUser(username, password);
+        
+        if (api_return.status) {
+            alert('Usuario autenticado exitosamente');
+            this.showMenu(api_return.username);
+        } else if (api_return.status == false) {
+            switch (api_return.result) {
+                case 'BLOCKED_USER':
+                    alert('Usuario bloqueado. Contacte al administrador');
+                    break;
+                case 'USER_PASSWORD_FAILED':
+                    alert('Usuario y/o contraseña incorrecta');
+                    break;
+                default:
+                    alert('Error desconocido');
+                    break;
+            }
+        }
+
+        return api_return;
+    }
+
+    showMenu(username) {
+        let exitMenu = false;
+        
+        while (!exitMenu) {
+            let option = window.prompt(
+                `Bienvenido ${username}\n` +
+                "Menu de acciones:\n" +
+                "1. Cambiar contraseña\n" +
+                "X. Salir\n" +
+                "Seleccione una opcion:"
+            );
+            
+            switch(option) {
+                case "1":
+                    this.changePasswordMenu(username);
+                    break;
+                case "X":
+                case "x":
+                    exitMenu = true;
+                    alert("Sesion finalizada. Volviendo al inicio.");
+                    break;
+                default:
+                    alert("Opcion no valida. Intente nuevamente.");
+            }
+        }
+    }
+
+    changePasswordMenu(username) {
+        let currentPassword = window.prompt("Ingrese su contraseña actual:");
+        if (currentPassword === null) return;
+
+        let newPassword = window.prompt(
+            "Ingrese su nueva contraseña:\n" +
+            "Requisitos:\n" +
+            `- Entre ${this._passwordManager.minLength} y ${this._passwordManager.maxLength} caracteres\n` +
+            `- Al menos ${this._passwordManager.minUppercase} mayuscula(s)\n` +
+            `- Al menos ${this._passwordManager.minSpecialChars} símbolos especiales\n` +
+            "- Caracteres alfanumericos\n\n" 
+        );
+
+        if (newPassword === null) {
+            return;
+        } else {
+            let confirmPassword = window.prompt("Confirme su nueva contraseña:");
+            if (newPassword !== confirmPassword) {
+                alert("Las contraseñas nuevas no coinciden.");
+                return;
+            }
+        }
+
+        let result = this._api.changePassword(username, currentPassword, newPassword);
+        alert(result.message);
+    }
+}
+
+class Application {
+    constructor(apiInstanceObject) {
+        this._api = apiInstanceObject;
+        this._defaultView = new LoginApplicationView(this._api);        
+        this._maxLoginFailedAttempts = this._api.getMaxLoginAttempts();
+        this._attempts = 0;
+        this._api_return = null;
+    }
+
+    init() {
+        this._api_return = this._defaultView.show();
+    }
+
+    run() {
+        while(this._api_return.result == 'USER_PASSWORD_FAILED' && this._attempts < this._maxLoginFailedAttempts) {
+            this._api_return = this._defaultView.show();
+
+            if (this._api_return.result == 'USER_PASSWORD_FAILED') {
+                this._attempts++;
+            }
+        }
+    }
+}
+
+function main() {
+    const passwordManager = new PasswordManager();
+    let model = new APIModelAccess(passwordManager);
+    let app = new Application(model);
+
+    app.init();
+    app.run();
+}
+
+window.onload = main;
+</script>
+</html>
