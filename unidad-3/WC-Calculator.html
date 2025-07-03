@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Calculadora Personalizada</title>
+        <style>
+            x-calculator {
+                display: grid;
+                grid-template-columns: repeat(4, 60px);
+                grid-gap: 10px;
+                width: 280px;
+                padding: 15px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+                background-color: #f9f9f9;
+            }
+
+            x-calculator input {
+                grid-column: 1 / -1;
+                width: 100%;
+                padding: 10px;
+                font-size: 1.5em;
+                text-align: right;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+
+            x-calculator button {
+                width: 60px;
+                height: 60px;
+                font-size: 1.2em;
+                border: none;
+                border-radius: 4px;
+                background-color: #e0e0e0;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+
+            x-calculator button:hover {
+                background-color: #d0d0d0;
+            }
+
+            x-calculator button.operator {
+                background-color: #f0a040;
+                color: white;
+            }
+
+            x-calculator button.operator:hover {
+                background-color: #e09030;
+            }
+
+            x-calculator button.clear {
+                background-color: #e74c3c;
+                color: white;
+            }
+
+            x-calculator button.clear:hover {
+                background-color: #c0392b;
+            }
+
+            x-calculator button.calculate {
+                background-color: #2ecc71;
+                color: white;
+            }
+
+            x-calculator button.calculate:hover {
+                background-color: #27ae60;
+            }
+        </style>
+    </head>
+    <body>
+
+    </body>
+
+	<script>
+
+	class CustomCalculator extends HTMLElement {
+        constructor() {
+            super();
+
+            this.display = document.createElement('input');
+
+            this.btn0 = document.createElement('button');
+            this.btn1 = document.createElement('button');
+            this.btn2 = document.createElement('button');
+            this.btn3 = document.createElement('button');
+            this.btn4 = document.createElement('button');
+            this.btn5 = document.createElement('button');
+            this.btn6 = document.createElement('button');
+            this.btn7 = document.createElement('button');
+            this.btn8 = document.createElement('button');
+            this.btn9 = document.createElement('button');
+
+            this.btnDot = document.createElement('button');
+            this.btnPlus = document.createElement('button');
+            this.btnMinus = document.createElement('button');
+            this.btnMultiply = document.createElement('button');
+            this.btnDivide = document.createElement('button');
+            this.btnCalculate = document.createElement('button');
+            this.btnClear = document.createElement('button');
+            
+            this.display.type = 'text';
+            this.btn0.innerText = '0';
+            this.btn1.innerText = '1';
+            this.btn2.innerText = '2';
+            this.btn3.innerText = '3';
+            this.btn4.innerText = '4';
+            this.btn5.innerText = '5';
+            this.btn6.innerText = '6';
+            this.btn7.innerText = '7';
+            this.btn8.innerText = '8';
+            this.btn9.innerText = '9';
+            this.btnDot.innerText = '.';
+            this.btnPlus.innerText = '+';
+            this.btnMinus.innerText = '-';
+            this.btnMultiply.innerText = '*';
+            this.btnDivide.innerText = '/';
+            this.btnCalculate.innerText = '=';
+            this.btnClear.innerText = 'C';
+        }
+
+		onButtonCalculateClick(event) {
+            this.display.value = eval(this.display.value);
+	    }   
+
+        onButton0Click(event)
+		{
+			this.display.value += '0';
+		}
+
+		onButton1Click(event)
+		{
+			this.display.value += '1';
+		}
+
+        onButton2Click(event)
+        {
+            this.display.value += '2';
+        }
+
+        onButton3Click(event)
+        {
+            this.display.value += '3';
+        }
+
+        onButton4Click(event)
+        {
+            this.display.value += '4';
+        }
+
+        onButton5Click(event)
+        {
+            this.display.value += '5';
+        }
+
+        onButton6Click(event)
+        {
+            this.display.value += '6';
+        }
+
+        onButton7Click(event)
+        {
+            this.display.value += '7';
+        }
+
+        onButton8Click(event)
+        {
+            this.display.value += '8';
+        }
+
+        onButton9Click(event)
+        {
+            this.display.value += '9';
+        }
+
+        onButtonDotClick(event) {
+        this.display.value += '.';
+        }
+
+		onButtonPlusClick(event)
+		{
+			this.display.value += '+';
+		}
+
+        onButtonMinusClick(event)
+        {
+            this.display.value += '-';
+        }
+
+        onButtonMultiplyClick(event)
+        {
+            this.display.value += '*';
+        }
+
+        onButtonDivideClick(event)
+        {
+            this.display.value += '/';
+        }
+
+        onButtonClearClick(event)
+        {
+            this.display.value = '';
+        }
+
+		connectedCallback()
+		{   
+            this.appendChild(this.display);
+            
+            this.appendChild(this.btn7);
+            this.appendChild(this.btn8);
+            this.appendChild(this.btn9);
+            this.appendChild(this.btnMinus);
+
+            this.appendChild(this.btn5);
+            this.appendChild(this.btn4);
+            this.appendChild(this.btn6);
+            this.appendChild(this.btnMultiply);
+
+			this.appendChild(this.btn1);
+            this.appendChild(this.btn2);
+            this.appendChild(this.btn3);
+            this.appendChild(this.btnDivide);
+
+            this.appendChild(this.btn0);
+            this.appendChild(this.btnDot);
+            this.appendChild(this.btnCalculate);
+            this.appendChild(this.btnPlus);
+            this.appendChild(this.btnClear);
+
+            this.btn0.onclick = this.onButton0Click.bind(this); 
+			this.btn1.onclick = this.onButton1Click.bind(this);
+            this.btn2.onclick = this.onButton2Click.bind(this);
+            this.btn3.onclick = this.onButton3Click.bind(this);
+            this.btn4.onclick = this.onButton4Click.bind(this);
+            this.btn5.onclick = this.onButton5Click.bind(this);
+            this.btn6.onclick = this.onButton6Click.bind(this);
+            this.btn7.onclick = this.onButton7Click.bind(this);
+            this.btn8.onclick = this.onButton8Click.bind(this);
+            this.btn9.onclick = this.onButton9Click.bind(this);
+            this.btnDot.onclick = this.onButtonDotClick.bind(this);
+			this.btnPlus.onclick = this.onButtonPlusClick.bind(this);
+            this.btnMinus.onclick = this.onButtonMinusClick.bind(this);
+            this.btnMultiply.onclick = this.onButtonMultiplyClick.bind(this);
+            this.btnDivide.onclick = this.onButtonDivideClick.bind(this);
+			this.btnCalculate.onclick = this.onButtonCalculateClick.bind(this);
+            this.btnClear.onclick = this.onButtonClearClick.bind(this);
+		}
+	}
+
+	customElements.define('x-calculator', CustomCalculator );
+
+	
+
+	function main()
+	{
+		document.body.appendChild( new CustomCalculator() );
+	}
+
+	window.onload = main;
+
+	</script>
+</html>

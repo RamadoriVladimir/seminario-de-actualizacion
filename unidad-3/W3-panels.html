@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pricing WebComponent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+</head>
+<body>
+
+<script>
+  class PricingPanel extends HTMLElement {
+    constructor() {
+      super();
+
+      this.header = document.createElement('header');
+      this.h1 = document.createElement('h1');
+      this.container = document.createElement('div');
+
+      // Plan 1: Basic
+      this.basicWrapper = document.createElement('div');
+      this.basicList = document.createElement('ul');
+      this.basicTitle = document.createElement('li');
+      this.basicStorage = document.createElement('li');
+      this.basicStorageBlack = document.createElement('b');
+      this.basicEmails = document.createElement('li');
+      this.basicEmailsBlack = document.createElement('b');
+      this.basicDomains = document.createElement('li');
+      this.basicDomainsBlack = document.createElement('b');
+      this.basicSupport = document.createElement('li');
+      this.basicSupportBlack = document.createElement('b');
+      this.basicPrice = document.createElement('li');
+      this.basicPriceH2 = document.createElement('h2');
+      this.basicPriceSpan = document.createElement('span');
+      this.basicButtonContainer = document.createElement('li');
+      this.basicButton = document.createElement('button');
+
+      // Plan 2: Pro
+      this.proWrapper = document.createElement('div');
+      this.proList = document.createElement('ul');
+      this.proTitle = document.createElement('li');
+      this.proStorage = document.createElement('li');
+      this.proStorageBlack = document.createElement('b');
+      this.proEmails = document.createElement('li');
+      this.proEmailsBlack = document.createElement('b');
+      this.proDomains = document.createElement('li');
+      this.proDomainsBlack = document.createElement('b');
+      this.proSupport = document.createElement('li');
+      this.proSupportBlack = document.createElement('b');
+      this.proPrice = document.createElement('li');
+      this.proPriceH2 = document.createElement('h2');
+      this.proPriceSpan = document.createElement('span');
+      this.proButtonContainer = document.createElement('li');
+      this.proButton = document.createElement('button');
+
+      // Plan 3: Premium
+      this.premiumWrapper = document.createElement('div');
+      this.premiumList = document.createElement('ul');
+      this.premiumTitle = document.createElement('li');
+      this.premiumStorage = document.createElement('li');
+      this.premiumStorageBlack = document.createElement('b');
+      this.premiumEmails = document.createElement('li');
+      this.premiumEmailsBlack = document.createElement('b');
+      this.premiumDomains = document.createElement('li');
+      this.premiumDomainsBlack = document.createElement('b');
+      this.premiumSupport = document.createElement('li');
+      this.premiumSupportBlack = document.createElement('b');
+      this.premiumPrice = document.createElement('li');
+      this.premiumPriceH2 = document.createElement('h2');
+      this.premiumPriceSpan = document.createElement('span');
+      this.premiumButtonContainer = document.createElement('li');
+      this.premiumButton = document.createElement('button');
+
+      this.h1.innerText = 'Responsive Pricing Tables';
+      this.container.className = 'w3-row-padding';
+
+      // Basic
+      this.basicWrapper.className = 'w3-third w3-margin-bottom';
+      this.basicList.className = 'w3-ul w3-border w3-center w3-hover-shadow';
+      this.basicTitle.className = 'w3-black w3-xlarge w3-padding-32';
+      this.basicTitle.innerText = 'Basic';
+      this.basicStorage.className = 'w3-padding-16';
+      this.basicStorageBlack.innerText = '10GB';
+      this.basicEmails.className = 'w3-padding-16';
+      this.basicEmailsBlack.innerText = '10';
+      this.basicDomains.className = 'w3-padding-16';
+      this.basicDomainsBlack.innerText = '10';
+      this.basicSupport.className = 'w3-padding-16';
+      this.basicSupportBlack.innerText = 'Endless';
+      this.basicPrice.className = 'w3-padding-16';
+      this.basicPriceH2.className = 'w3-wide';
+      this.basicPriceH2.innerText = '$ 10';
+      this.basicPriceSpan.className = 'w3-opacity';
+      this.basicPriceSpan.innerText = 'per month';
+      this.basicButtonContainer.className = 'w3-light-grey w3-padding-24';
+      this.basicButton.className = 'w3-button w3-green w3-padding-large';
+      this.basicButton.innerText = 'Sign Up';
+
+      // Pro
+      this.proWrapper.className = 'w3-third w3-margin-bottom';
+      this.proList.className = 'w3-ul w3-border w3-center w3-hover-shadow';
+      this.proTitle.className = 'w3-green w3-xlarge w3-padding-32';
+      this.proTitle.innerText = 'Pro';
+      this.proStorage.className = 'w3-padding-16';
+      this.proStorageBlack.innerText = '25GB';
+      this.proEmails.className = 'w3-padding-16';
+      this.proEmailsBlack.innerText = '25';
+      this.proDomains.className = 'w3-padding-16';
+      this.proDomainsBlack.innerText = '25';
+      this.proSupport.className = 'w3-padding-16';
+      this.proSupportBlack.innerText = 'Endless';
+      this.proPrice.className = 'w3-padding-16';
+      this.proPriceH2.className = 'w3-wide';
+      this.proPriceH2.innerText = '$ 25';
+      this.proPriceSpan.className = 'w3-opacity';
+      this.proPriceSpan.innerText = 'per month';
+      this.proButtonContainer.className = 'w3-light-grey w3-padding-24';
+      this.proButton.className = 'w3-button w3-green w3-padding-large';
+      this.proButton.innerText = 'Sign Up';
+
+      // Premium
+      this.premiumWrapper.className = 'w3-third w3-margin-bottom';
+      this.premiumList.className = 'w3-ul w3-border w3-center w3-hover-shadow';
+      this.premiumTitle.className = 'w3-black w3-xlarge w3-padding-32';
+      this.premiumTitle.innerText = 'Premium';
+      this.premiumStorage.className = 'w3-padding-16';
+      this.premiumStorageBlack.innerText = '50GB';
+      this.premiumEmails.className = 'w3-padding-16';
+      this.premiumEmailsBlack.innerText = '50';
+      this.premiumDomains.className = 'w3-padding-16';
+      this.premiumDomainsBlack.innerText = '50';
+      this.premiumSupport.className = 'w3-padding-16';
+      this.premiumSupportBlack.innerText = 'Endless';
+      this.premiumPrice.className = 'w3-padding-16';
+      this.premiumPriceH2.className = 'w3-wide';
+      this.premiumPriceH2.innerText = '$ 50';
+      this.premiumPriceSpan.className = 'w3-opacity';
+      this.premiumPriceSpan.innerText = 'per month';
+      this.premiumButtonContainer.className = 'w3-light-grey w3-padding-24';
+      this.premiumButton.className = 'w3-button w3-green w3-padding-large';
+      this.premiumButton.innerText = 'Sign Up';
+    }
+
+    connectedCallback() {
+      this.appendChild(this.header);
+      this.header.appendChild(this.h1);
+      this.appendChild(this.container);
+
+      // Basic
+      this.container.appendChild(this.basicWrapper);
+      this.basicWrapper.appendChild(this.basicList);
+      this.basicList.appendChild(this.basicTitle);
+      this.basicStorage.appendChild(this.basicStorageBlack);
+      this.basicStorage.appendChild(document.createTextNode(' Storage'));
+      this.basicList.appendChild(this.basicStorage);
+      this.basicEmails.appendChild(this.basicEmailsBlack);
+      this.basicEmails.appendChild(document.createTextNode(' Emails'));
+      this.basicList.appendChild(this.basicEmails);
+      this.basicDomains.appendChild(this.basicDomainsBlack);
+      this.basicDomains.appendChild(document.createTextNode(' Domains'));
+      this.basicList.appendChild(this.basicDomains);
+      this.basicSupport.appendChild(this.basicSupportBlack);
+      this.basicSupport.appendChild(document.createTextNode(' Support'));
+      this.basicList.appendChild(this.basicSupport);
+      this.basicList.appendChild(this.basicPrice);
+      this.basicPrice.appendChild(this.basicPriceH2);
+      this.basicPrice.appendChild(this.basicPriceSpan);
+      this.basicList.appendChild(this.basicButtonContainer);
+      this.basicButtonContainer.appendChild(this.basicButton);
+
+      // Pro
+      this.container.appendChild(this.proWrapper);
+      this.proWrapper.appendChild(this.proList);
+      this.proList.appendChild(this.proTitle);
+      this.proStorage.appendChild(this.proStorageBlack);
+      this.proStorage.appendChild(document.createTextNode(' Storage'));
+      this.proList.appendChild(this.proStorage);
+      this.proEmails.appendChild(this.proEmailsBlack);
+      this.proEmails.appendChild(document.createTextNode(' Emails'));
+      this.proList.appendChild(this.proEmails);
+      this.proDomains.appendChild(this.proDomainsBlack);
+      this.proDomains.appendChild(document.createTextNode(' Domains'));
+      this.proList.appendChild(this.proDomains);
+      this.proSupport.appendChild(this.proSupportBlack);
+      this.proSupport.appendChild(document.createTextNode(' Support'));
+      this.proList.appendChild(this.proSupport);
+      this.proList.appendChild(this.proPrice);
+      this.proPrice.appendChild(this.proPriceH2);
+      this.proPrice.appendChild(this.proPriceSpan);
+      this.proList.appendChild(this.proButtonContainer);
+      this.proButtonContainer.appendChild(this.proButton);
+
+      // Premium
+      this.container.appendChild(this.premiumWrapper);
+      this.premiumWrapper.appendChild(this.premiumList);
+      this.premiumList.appendChild(this.premiumTitle);
+      this.premiumStorage.appendChild(this.premiumStorageBlack);
+      this.premiumStorage.appendChild(document.createTextNode(' Storage'));
+      this.premiumList.appendChild(this.premiumStorage);
+      this.premiumEmails.appendChild(this.premiumEmailsBlack);
+      this.premiumEmails.appendChild(document.createTextNode(' Emails'));
+      this.premiumList.appendChild(this.premiumEmails);
+      this.premiumDomains.appendChild(this.premiumDomainsBlack);
+      this.premiumDomains.appendChild(document.createTextNode(' Domains'));
+      this.premiumList.appendChild(this.premiumDomains);
+      this.premiumSupport.appendChild(this.premiumSupportBlack);
+      this.premiumSupport.appendChild(document.createTextNode(' Support'));
+      this.premiumList.appendChild(this.premiumSupport);
+      this.premiumList.appendChild(this.premiumPrice);
+      this.premiumPrice.appendChild(this.premiumPriceH2);
+      this.premiumPrice.appendChild(this.premiumPriceSpan);
+      this.premiumList.appendChild(this.premiumButtonContainer);
+      this.premiumButtonContainer.appendChild(this.premiumButton);
+    }
+  }
+
+  customElements.define('pricing-panel', PricingPanel);
+
+  function main() {
+    document.body.appendChild(new PricingPanel());
+  }
+
+  window.onload = main;
+</script>
+
+</body>
+</html>
