@@ -249,11 +249,30 @@
 			this.btnCalculate.onclick = this.onButtonCalculateClick.bind(this);
             this.btnClear.onclick = this.onButtonClearClick.bind(this);
 		}
+
+        disconnectedCallback() 
+        {
+            this.btn0.onclick = null; 
+            this.btn1.onclick = null;
+            this.btn2.onclick = null;
+            this.btn3.onclick = null;
+            this.btn4.onclick = null;
+            this.btn5.onclick = null;
+            this.btn6.onclick = null;
+            this.btn7.onclick = null;
+            this.btn8.onclick = null;
+            this.btn9.onclick = null;
+            this.btnDot.onclick = null;
+            this.btnPlus.onclick = null;
+            this.btnMinus.onclick = null;
+            this.btnMultiply.onclick = null;
+            this.btnDivide.onclick = null;
+            this.btnCalculate.onclick = null;
+            this.btnClear.onclick = null;
+        }
 	}
 
 	customElements.define('x-calculator', CustomCalculator );
-
-	
 
 	function main()
 	{
