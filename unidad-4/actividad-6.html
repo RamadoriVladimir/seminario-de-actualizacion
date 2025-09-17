@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Refactorized Component</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+</head>
+<body>
+</body>
+
+<script>
+    class JsonPlaceholderService {
+        constructor(baseUrl) {
+            this.baseUrl = baseUrl;
+        }
+
+        getUsers() {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = () => this.checkfetchResponse(xhr, resolve, reject);
+                xhr.onerror = () => this.handleNetworkError(reject);
+                xhr.open('GET', `${this.baseUrl}/users`);
+                xhr.send();
+            });
+        }
+
+        checkfetchResponse(xhr, resolve, reject) {
+            if (xhr.status !== 200) {
+                reject(new Error(`Error fetching data: ${xhr.statusText}`));
+            } 
+            resolve(JSON.parse(xhr.responseText));
+        }
+
+        handleNetworkError(reject) {
+            reject(new Error("Network error"));
+        }
+
+        getUserById(userId) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = () => this.checkfetchResponse(xhr, resolve, reject);
+                xhr.onerror = () => this.handleNetworkError(reject);
+                xhr.open('GET', `${this.baseUrl}/users/${userId}`);
+                xhr.send();
+            });
+        }
+    }
+
+    class UserListComponent extends HTMLElement {
+        constructor(dataService) {
+            super();
+            if (!dataService) throw new Error("DataService is required");
+            this.dataService = dataService;
+
+            this.tableHeaders = [
+                { key: 'id', label: 'ID' },
+                { key: 'username', label: 'Usuario' },
+                { key: 'name', label: 'Nombre' },
+                { key: 'email', label: 'Correo' },
+                { key: 'website', label: 'Web' },
+                { key: 'phone', label: 'Celular' }
+            ];
+
+            this.btn1 = document.createElement('button');
+            this.btn1.innerText = 'Efectuar petición';
+            this.btn1.className = "w3-button w3-blue w3-margin";
+
+            this.outputTable = document.createElement('table');
+            this.outputTable.className = "w3-table-all w3-hoverable w3-card-4 w3-margin-top";
+
+            this.createModal();
+
+            this.appendChild(this.btn1);
+            this.appendChild(this.outputTable);
+        }
+
+        createModal() {
+            this.modal = document.createElement('div');
+            this.modal.className = "w3-modal";
+            this.modal.style.display = "none";
+
+            const modalContent = document.createElement('div');
+            modalContent.className = "w3-modal-content w3-animate-top w3-card-4";
+
+            const modalHeader = document.createElement('header');
+            modalHeader.className = "w3-container w3-teal";
+
+            this.closeBtn = document.createElement('span');
+            this.closeBtn.className = "w3-button w3-display-topright";
+            this.closeBtn.textContent = '×';
+
+            const headerTitle = document.createElement('h2');
+            headerTitle.textContent = "Información del Usuario";
+
+            this.modalBody = document.createElement('div');
+            this.modalBody.className = "w3-container";
+
+            modalHeader.appendChild(this.closeBtn);
+            modalHeader.appendChild(headerTitle);
+
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(this.modalBody);
+            this.modal.appendChild(modalContent);
+            this.appendChild(this.modal);
+        }
+
+        createParagraph(title) {
+            const p = document.createElement('p');
+            const strong = document.createElement('strong');
+            strong.textContent = `${title}:`;
+            p.appendChild(strong);
+            return p;
+        }
+
+        createList(data) {
+            const ul = document.createElement('ul');
+            for (const key in data) {
+                const li = document.createElement('li');
+                li.textContent = `${key}: ${data[key]}`;
+                ul.appendChild(li);
+            }
+            return ul;
+        }
+
+        populateModal(user) {
+            this.modalBody.textContent = '';
+            this.modalBody.appendChild(this.createParagraph('Dirección'));
+            this.modalBody.appendChild(this.createList(user.address));
+            this.modalBody.appendChild(this.createParagraph('Compañía'));
+            this.modalBody.appendChild(this.createList(user.company));
+        }
+
+        renderUserModal(data) {
+            this.populateModal(data);
+            this.modal.style.display = 'block';
+        }
+
+        renderTable(data) {
+            this.outputTable.textContent = '';
+            const thead = this.createTableHeader(this.tableHeaders);
+            const tbody = this.createTableBody(data, this.tableHeaders);
+            this.outputTable.appendChild(thead);
+            this.outputTable.appendChild(tbody);
+        }
+
+        createTableHeader(tableHeaders) {
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.className = "w3-teal";
+            tableHeaders.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col.label;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            return thead;
+        }
+
+        createTableBody(data, tableHeaders) {
+            const tbody = document.createElement('tbody');
+            for (let item of data) {
+                const tr = document.createElement('tr');
+                tr.dataset.userId = item.id;
+                tableHeaders.forEach(col => {
+                    const td = this.createCell(col, item[col.key]);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
+            return tbody;
+        }
+
+        createCell(col, value) {
+            const td = document.createElement('td');
+            if (col.key === 'email') {
+                const span = document.createElement('span');
+                span.className = "w3-tag w3-round w3-light-blue w3-border w3-border-blue";
+                span.textContent = value || '';
+                td.appendChild(span);
+            } else {
+                td.textContent = value || '';
+            }
+            return td;
+        }
+
+        onButton1Click() {
+            this.dataService.getUsers()
+                .then(data => this.renderTable(data))
+                .catch(error => console.error(error));
+        }
+
+        onCloseModal() {
+            this.modal.style.display = 'none';
+        }
+
+        onTableRowClick(event) {
+            const tr = event.target.closest('tr');
+            if (!tr || !tr.dataset.userId) return;
+            const userId = tr.dataset.userId;
+            this.dataService.getUserById(userId)
+                .then(user => this.renderUserModal(user))
+                .catch(error => console.error(error));
+        }
+
+        connectedCallback() {
+            this.btn1.onclick = this.onButton1Click.bind(this);
+            this.closeBtn.onclick = this.onCloseModal.bind(this);
+            
+            // referencia del listener
+            this.boundOnRowClick = this.onTableRowClick.bind(this);
+            this.outputTable.addEventListener('click', this.boundOnRowClick);
+        }
+
+        disconnectedCallback() {
+            this.btn1.onclick = null;
+            this.closeBtn.onclick = null;
+            this.outputTable.removeEventListener('click', this.boundOnRowClick);
+        }
+    }
+
+    const jsonService = new JsonPlaceholderService('https://jsonplaceholder.typicode.com');
+
+    class UserList extends UserListComponent {
+        constructor() {
+            super(jsonService);
+        }
+    }
+
+    customElements.define('user-list', UserList);
+
+    function main() {
+        let userList = new UserList();
+        document.body.appendChild(userList);
+    }
+
+    window.onload = main;
+</script>
+</html>

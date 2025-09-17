@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Custom Element Example</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+</head>
+<body>
+</body>
+
+<script>
+	class XRequest extends HTMLElement {
+		constructor() {
+			super();
+
+            this.tableHeaders = [
+                { key: 'id', label: 'ID' },
+                { key: 'username', label: 'Usuario' },
+                { key: 'name', label: 'Nombre' },
+                { key: 'email', label: 'Correo' },
+                { key: 'website', label: 'Web' },
+                { key: 'phone', label: 'Celular' }
+            ];
+
+			this.btn1 = document.createElement('button');
+			this.outputTable = document.createElement('table');
+
+			this.btn1.innerText = 'Efectuar petición';
+			this.btn1.className = "w3-button w3-blue w3-margin";
+
+			this.outputTable.className = "w3-table-all w3-hoverable w3-card-4 w3-margin-top";
+
+            this.createModal();
+
+            this.appendChild(this.btn1);
+			this.appendChild(this.outputTable);
+		}
+
+		onButton1Click() {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = () => this.handleResponse(xhr, 'list');
+            xhr.onerror = () => this.handleError(xhr);
+            xhr.open('GET', 'https://jsonplaceholder.typicode.com/users/');
+            xhr.send();
+        }
+
+        onCloseModal() {
+            this.modal.style.display = 'none';
+        }
+
+        handleResponse(xhr, mode = 'list') {
+            if (xhr.readyState !== 4 || xhr.status !== 200) {
+                this.handleError(xhr);
+                return;
+            }
+
+            const data = JSON.parse(xhr.responseText);
+
+            if (mode === 'list') {
+                this.renderTable(data);
+            } else if (mode === 'detail') {
+                this.renderUserModal(data);
+            }
+        }
+
+        handleError(xhr) {
+            console.error(xhr.statusText);
+        }
+
+        renderTable(data) {
+            this.outputTable.textContent = '';
+            const thead = this.createTableHeader(this.tableHeaders);
+            const tbody = this.createTableBody(data, this.tableHeaders);
+            this.outputTable.appendChild(thead);
+            this.outputTable.appendChild(tbody);
+        }
+
+        createTableHeader(tableHeaders) {
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.className = "w3-teal";
+
+            tableHeaders.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col.label;
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            return thead;
+        }
+        
+        createTableBody(data, tableHeaders) {
+            const tbody = document.createElement('tbody');
+            
+            for (let item of data) {
+                const tr = document.createElement('tr');
+                tr.dataset.userId = item.id;
+
+                tableHeaders.forEach(col => {
+                    const td = this.createCell(col, item[col.key]);
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            }
+            return tbody;
+        }
+
+        createCell(col, value) {
+            const td = document.createElement('td');
+            this.stylizeCell(td, col, value);
+            return td;
+        }
+
+        stylizeCell(td, col, value) {
+            if (col.key === 'email') {
+                const span = document.createElement('span');
+                span.className = "w3-tag w3-round w3-light-blue w3-border w3-border-blue";
+                span.textContent = value || '';
+                td.appendChild(span);
+            } else {
+                td.textContent = value || '';
+            }
+        }
+
+        fetchUserDetails(userId) {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = () => this.handleResponse(xhr, 'detail');
+            xhr.onerror = () => this.handleError(xhr);
+            xhr.open('GET', `https://jsonplaceholder.typicode.com/users/${userId}`);
+            xhr.send();
+        }
+
+        createModal() {
+            this.modal = document.createElement('div');
+            this.modal.className = "w3-modal";
+            this.modal.style.display = "none";
+
+            const modalContent = document.createElement('div');
+            modalContent.className = "w3-modal-content w3-animate-top w3-card-4";
+
+            const modalHeader = document.createElement('header');
+            modalHeader.className = "w3-container w3-teal";
+
+            // Guarda closeBtn como propiedad
+            this.closeBtn = document.createElement('span');
+            this.closeBtn.className = "w3-button w3-display-topright";
+            this.closeBtn.textContent = '×';
+
+            const headerTitle = document.createElement('h2');
+            headerTitle.textContent = "Información del Usuario";
+
+            this.modalBody = document.createElement('div');
+            this.modalBody.className = "w3-container";
+
+            modalHeader.appendChild(this.closeBtn);
+            modalHeader.appendChild(headerTitle);
+
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(this.modalBody);
+
+            this.modal.appendChild(modalContent);
+            this.appendChild(this.modal);
+        }
+
+        populateModal(user) {
+            // Limpiar modal
+            this.modalBody.textContent = '';
+
+            // Dirección
+            const addressTitle = document.createElement('p');
+            const strongAddress = document.createElement('strong');
+            strongAddress.textContent = 'Dirección:';
+            addressTitle.appendChild(strongAddress);
+            this.modalBody.appendChild(addressTitle);
+
+            const addressList = document.createElement('ul');
+
+            const street = document.createElement('li');
+            street.textContent = `Calle: ${user.address.street}`;
+            addressList.appendChild(street);
+
+            const suite = document.createElement('li');
+            suite.textContent = `Suite: ${user.address.suite}`;
+            addressList.appendChild(suite);
+
+            const city = document.createElement('li');
+            city.textContent = `Ciudad: ${user.address.city}`;
+            addressList.appendChild(city);
+
+            const zipcode = document.createElement('li');
+            zipcode.textContent = `Zipcode: ${user.address.zipcode}`;
+            addressList.appendChild(zipcode);
+
+            this.modalBody.appendChild(addressList);
+
+            // Compañía
+            const companyTitle = document.createElement('p');
+            const strongCompany = document.createElement('strong');
+            strongCompany.textContent = 'Compañía:';
+            companyTitle.appendChild(strongCompany);
+            this.modalBody.appendChild(companyTitle);
+
+            const companyList = document.createElement('ul');
+
+            const name = document.createElement('li');
+            name.textContent = `Nombre: ${user.company.name}`;
+            companyList.appendChild(name);
+
+            const catchPhrase = document.createElement('li');
+            catchPhrase.textContent = `CatchPhrase: ${user.company.catchPhrase}`;
+            companyList.appendChild(catchPhrase);
+
+            const bs = document.createElement('li');
+            bs.textContent = `BS: ${user.company.bs}`;
+            companyList.appendChild(bs);
+
+            this.modalBody.appendChild(companyList);
+        }
+
+        renderUserModal(data) {
+            this.populateModal(data);
+            this.modal.style.display = 'block';
+        }
+
+        onTableRowClick(event) {
+            const tr = event.target.closest('tr');
+            if (!tr || !tr.dataset.userId) return;
+            const userId = tr.dataset.userId;
+            this.fetchUserDetails(userId);
+        }
+		
+        connectedCallback() {
+            this.btn1.onclick = this.onButton1Click.bind(this);
+            this.closeBtn.onclick = this.onCloseModal.bind(this);
+            this.outputTable.addEventListener('click', this.onTableRowClick.bind(this));
+        }
+
+        disconnectedCallback() {
+            this.btn1.onclick = null;
+            this.closeBtn.onclick = null;
+            this.outputTable.removeEventListener('click', this.onTableRowClick.bind(this));
+        }
+    }
+
+	customElements.define('x-request', XRequest);
+
+	function main() {
+        let xrequest = new XRequest();
+		document.body.appendChild(xrequest);
+	}
+
+	window.onload = main;
+</script>
+</html>

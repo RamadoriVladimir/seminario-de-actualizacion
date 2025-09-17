@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Custom Element Example</title>
+</head>
+<body>
+</body>
+
+<script>
+	class XMLHttpRequest extends HTMLElement {
+		constructor() {
+			super();
+
+			this.btn1 = document.createElement('button');
+			this.outputText = document.createElement('textarea');
+
+			this.btn1.innerText = 'Efectuar peticion';
+
+            this.appendChild(this.btn1);
+			this.appendChild(this.outputText);
+		}
+
+		onButton1Click(event) {
+            const xhr = new window.XMLHttpRequest();
+            xhr.onload = (event) => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    this.outputText.value = xhr.responseText;
+                } else {
+                    console.error(xhr.statusText); ;
+                }
+            }
+            xhr.onerror = (event) => {
+                console.error(xhr.statusText);
+            }
+
+            xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/1');
+            xhr.send();
+		}
+
+		connectedCallback() {
+			this.btn1.onclick = this.onButton1Click.bind(this);
+		}
+
+        disconnectedCallback() {
+            this.btn1.onclick = null;
+        }
+    }
+
+	customElements.define('x-request', XMLHttpRequest);
+
+	function main() {
+        let xrequest = new XMLHttpRequest();
+		document.body.appendChild(xrequest);
+	}
+
+	window.onload = main;
+</script>
+</html>
