@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>MVC</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+</head>
+<body>
+</body>
+
+<script>
+	class Model {
+		constructor() {
+			this.users = [];
+			this.selectedUser = null;
+		}
+
+		fetchUsers(callback, errorCallback) {
+			const xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+				if (xhr.readyState !== 4 || xhr.status !== 200) {
+					errorCallback(xhr);
+					return;
+				}
+				const data = JSON.parse(xhr.responseText);
+				callback(data);
+			};
+			xhr.onerror = function() {
+				errorCallback(xhr);
+			};
+			xhr.open('GET', 'https://jsonplaceholder.typicode.com/users/');
+			xhr.send();
+		}
+
+		fetchUserDetails(userId, callback, errorCallback) {
+			const xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+				if (xhr.readyState !== 4 || xhr.status !== 200) {
+					errorCallback(xhr);
+					return;
+				}
+				const data = JSON.parse(xhr.responseText);
+				callback(data);
+			};
+			xhr.onerror = function() {
+				errorCallback(xhr);
+			};
+			xhr.open('GET', `https://jsonplaceholder.typicode.com/users/${userId}`);
+			xhr.send();
+		}
+
+		setUsers(users) {
+			this.users = users;
+		}
+
+		setSelectedUser(user) {
+			this.selectedUser = user;
+		}
+
+		logError(xhr) {
+			console.error(xhr.statusText);
+		}
+	}
+
+	class View extends HTMLElement {
+		constructor(modelInstance) {
+			super();
+
+			this.innerController = new Controller(this, modelInstance);
+
+			this.tableHeaders = [
+				{ key: 'id', label: 'ID' },
+				{ key: 'username', label: 'Usuario' },
+				{ key: 'name', label: 'Nombre' },
+				{ key: 'email', label: 'Correo' },
+				{ key: 'website', label: 'Web' },
+				{ key: 'phone', label: 'Celular' }
+			];
+
+			this.btn1 = document.createElement('button');
+			this.outputTable = document.createElement('table');
+
+			this.btn1.innerText = 'Efectuar petición';
+			this.btn1.className = "w3-button w3-blue w3-margin";
+
+			this.outputTable.className = "w3-table-all w3-hoverable w3-card-4 w3-margin-top";
+
+			this.createModal();
+
+			this.appendChild(this.btn1);
+			this.appendChild(this.outputTable);
+		}
+
+		createModal() {
+			this.modal = document.createElement('div');
+			this.modal.className = "w3-modal";
+			this.modal.style.display = "none";
+
+			const modalContent = document.createElement('div');
+			modalContent.className = "w3-modal-content w3-animate-top w3-card-4";
+
+			const modalHeader = document.createElement('header');
+			modalHeader.className = "w3-container w3-teal";
+
+			this.closeBtn = document.createElement('span');
+			this.closeBtn.className = "w3-button w3-display-topright";
+			this.closeBtn.textContent = '×';
+
+			const headerTitle = document.createElement('h2');
+			headerTitle.textContent = "Información del Usuario";
+
+			this.modalBody = document.createElement('div');
+			this.modalBody.className = "w3-container";
+
+			modalHeader.appendChild(this.closeBtn);
+			modalHeader.appendChild(headerTitle);
+
+			modalContent.appendChild(modalHeader);
+			modalContent.appendChild(this.modalBody);
+
+			this.modal.appendChild(modalContent);
+			this.appendChild(this.modal);
+		}
+
+		renderTable(data) {
+			this.outputTable.textContent = '';
+			const thead = this.createTableHeader(this.tableHeaders);
+			const tbody = this.createTableBody(data, this.tableHeaders);
+			this.outputTable.appendChild(thead);
+			this.outputTable.appendChild(tbody);
+		}
+
+		createTableHeader(tableHeaders) {
+			const thead = document.createElement('thead');
+			const headerRow = document.createElement('tr');
+			headerRow.className = "w3-teal";
+
+			tableHeaders.forEach(function(col) {
+				const th = document.createElement('th');
+				th.textContent = col.label;
+				headerRow.appendChild(th);
+			});
+
+			thead.appendChild(headerRow);
+			return thead;
+		}
+
+		createTableBody(data, tableHeaders) {
+			const tbody = document.createElement('tbody');
+
+			for (let item of data) {
+				const tr = document.createElement('tr');
+				tr.dataset.userId = item.id;
+
+				tableHeaders.forEach(function(col) {
+					const td = this.createCell(col, item[col.key]);
+					tr.appendChild(td);
+				}.bind(this));
+
+				tbody.appendChild(tr);
+			}
+			return tbody;
+		}
+
+		createCell(col, value) {
+			const td = document.createElement('td');
+			this.stylizeCell(td, col, value);
+			return td;
+		}
+
+		stylizeCell(td, col, value) {
+			if (col.key === 'email') {
+				const span = document.createElement('span');
+				span.className = "w3-tag w3-round w3-light-blue w3-border w3-border-blue";
+				span.textContent = value || '';
+				td.appendChild(span);
+			} else {
+				td.textContent = value || '';
+			}
+		}
+
+		showModal(user) {
+			this.populateModal(user);
+			this.modal.style.display = 'block';
+		}
+
+		hideModal() {
+			this.modal.style.display = 'none';
+		}
+
+		populateModal(user) {
+			this.modalBody.textContent = '';
+
+			const addressTitle = document.createElement('p');
+			const strongAddress = document.createElement('strong');
+			strongAddress.textContent = 'Dirección:';
+			addressTitle.appendChild(strongAddress);
+			this.modalBody.appendChild(addressTitle);
+
+			const addressList = document.createElement('ul');
+
+			const street = document.createElement('li');
+			street.textContent = `Calle: ${user.address.street}`;
+			addressList.appendChild(street);
+
+			const suite = document.createElement('li');
+			suite.textContent = `Suite: ${user.address.suite}`;
+			addressList.appendChild(suite);
+
+			const city = document.createElement('li');
+			city.textContent = `Ciudad: ${user.address.city}`;
+			addressList.appendChild(city);
+
+			const zipcode = document.createElement('li');
+			zipcode.textContent = `Zipcode: ${user.address.zipcode}`;
+			addressList.appendChild(zipcode);
+
+			this.modalBody.appendChild(addressList);
+
+			const companyTitle = document.createElement('p');
+			const strongCompany = document.createElement('strong');
+			strongCompany.textContent = 'Compañía:';
+			companyTitle.appendChild(strongCompany);
+			this.modalBody.appendChild(companyTitle);
+
+			const companyList = document.createElement('ul');
+
+			const name = document.createElement('li');
+			name.textContent = `Nombre: ${user.company.name}`;
+			companyList.appendChild(name);
+
+			const catchPhrase = document.createElement('li');
+			catchPhrase.textContent = `CatchPhrase: ${user.company.catchPhrase}`;
+			companyList.appendChild(catchPhrase);
+
+			const bs = document.createElement('li');
+			bs.textContent = `BS: ${user.company.bs}`;
+			companyList.appendChild(bs);
+
+			this.modalBody.appendChild(companyList);
+		}
+
+		connectedCallback() {
+			this.btn1.onclick = this.innerController.onButton1Click.bind(this.innerController);
+			this.closeBtn.onclick = this.innerController.onCloseModal.bind(this.innerController);
+			this.outputTable.addEventListener('click', this.innerController.onTableRowClick.bind(this.innerController));
+
+			this.innerController.init();
+		}
+
+		disconnectedCallback() {
+			this.btn1.onclick = null;
+			this.closeBtn.onclick = null;
+			this.outputTable.removeEventListener('click', this.innerController.onTableRowClick.bind(this.innerController));
+
+			this.innerController.release();
+		}
+	}
+
+	customElements.define('x-request', View);
+
+	class Controller {
+		constructor(viewInstance, modelInstance) {
+			this.viewInstance = viewInstance;
+			this.modelInstance = modelInstance;
+		}
+
+		init() {
+			console.log('Initializing controller...');
+		}
+
+		release() {
+			console.log('Releasing controller...');
+		}
+
+		onButton1Click() {
+			this.modelInstance.fetchUsers(
+				this.handleUsersSuccess.bind(this),
+				this.handleError.bind(this)
+			);
+		}
+
+		onCloseModal() {
+			this.viewInstance.hideModal();
+		}
+
+		onTableRowClick(event) {
+			const tr = event.target.closest('tr');
+			if (!tr || !tr.dataset.userId) return;
+			const userId = tr.dataset.userId;
+			this.modelInstance.fetchUserDetails(
+				userId,
+				this.handleUserDetailSuccess.bind(this),
+				this.handleError.bind(this)
+			);
+		}
+
+		handleUsersSuccess(data) {
+			this.modelInstance.setUsers(data);
+			this.viewInstance.renderTable(data);
+		}
+
+		handleUserDetailSuccess(data) {
+			this.modelInstance.setSelectedUser(data);
+			this.viewInstance.showModal(data);
+		}
+
+		handleError(xhr) {
+			this.modelInstance.logError(xhr);
+		}
+	}
+
+	function main() {
+		let model = new Model();
+		let view = new View(model);
+		document.body.appendChild(view);
+	}
+
+	window.onload = main;
+</script>
+</html>
